@@ -105,6 +105,16 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 #endif
 
   VectorXd y = z - h_prime;
+  // normalize y 
+  while (y[1] < -M_PI)
+  {
+    y[1] += M_PI;
+  }
+  while (y[1] >= M_PI)
+  {
+    y[1] -= M_PI;
+  }
+
 #if PRINT_INTERMEDIATE_STEPS
   cout << "UpdateEKF: y \n" << y << endl;
 #endif
