@@ -1,8 +1,8 @@
 
 
-kalman filter 
+# Extended Kalman Filter 
 
-![1555710226042](C:\Udacity\CarND-Extended-Kalman-Filter-Project\Notes\Kalman Filter design)
+![1555710226042](.\Kalman Filter design)
 $$
 \text{prediction} \\
 x' = Fx+u \\
@@ -15,6 +15,16 @@ K=PH^TS^{-1} \\
 x'=x+Ky \\
 P'=(I-KH)P
 $$
+
+### Extension
+
+$$
+x' = f(x,u) \ \ \ where \ \ \ u =0 \\
+y = z-h(x') using \ H_j instead\ of \ H \\
+y = z_{radar} - h(x')
+$$
+
+
 
 
 
@@ -99,9 +109,9 @@ $\rho$ is the distance to the pedestrian
 
 $\phi$ is referenced counter clockwise x-axis is the bearing
 
-$\dot\rho$ is the projection of the velocity $v $ onto the line ​$L$
+$\dot\rho$ is the projection of the velocity $v $ onto the line $L$
 
-We need a multi-dimensional Taylor series to approximate our $h​$ function
+We need a multi-dimensional Taylor series to approximate our $h$ function
 $$
 T(x) = f(a) + (x-a)^TDf(a) + \frac{1}{2!}(x-a)^TD^2f(a)*(x-a) + ...
 $$
@@ -114,6 +124,21 @@ $Df(a)$ is a Jacobian matrix, $D^2f(a)$ is a Hessian matrix
 We only need the Jacobian because we are under the assumption $(x-a)$ is small.
 
 
+
+Now we have derived Jacombian matrix $H_j$ for $h(x')$
+$$
+H_j = 
+\begin{bmatrix}
+\frac{p_x}{\sqrt{p_x^2+p_y^2}} &\frac {p_x}{\sqrt{p_x^2+p_y^2}} & 0 & 0\\
+-\frac{p_y}{p_x^2+p_y^2} & \frac{p_x}{p_x^2+p_y^2}& 0 & 0\\
+\frac{p_y(v_xp_y-v_yp_x)}{(p_x^2+p_y^2)^{3/2}} &\frac{p_x(v_yp_x-v_xp_y)}{(p_x^2+p_y^2)^{3/2}} &\frac{p_x}{\sqrt{p_x^2+p_y^2}} &\frac {p_x}{\sqrt{p_x^2+p_y^2}} \\
+\end{bmatrix}
+$$
+
+
+
+
+## Code implementation snippets
 
 ```python
 # Implement the filter function below
