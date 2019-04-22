@@ -63,6 +63,10 @@ class KalmanFilter {
 
   // measurement covariance matrix
   Eigen::MatrixXd R_;
+
+private:
+  // Calculate the polar representation in terms of \rho, \phi, \dot\rho
+  static Eigen::VectorXd LinearStateToPolar(const Eigen::VectorXd &x);
 };
 
 #endif // KALMAN_FILTER_H_
