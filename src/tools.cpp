@@ -54,21 +54,21 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   MatrixXd Hj(3, 4);
   
   // recover state parameters
-  float px = x_state(0);
-  float py = x_state(1);
-  float vx = x_state(2);
-  float vy = x_state(3);
+  double px = x_state(0);
+  double py = x_state(1);
+  double vx = x_state(2);
+  double vy = x_state(3);
 
   // check division by zero
-  const bool b_devide_by_zero = (px * px + py * py) == 0;
+  const bool b_devide_by_zero = (px * px + py * py) <= 1e-8;
   if (b_devide_by_zero)
   {
     cout << "Division by zero, returning initialized matrix" << endl;
     assert(!b_devide_by_zero);
   }
   // compute the Jacobian matrix
-  const float pxpy2 = px * px + py * py;
-  const float pxpy3_2 = pow(pxpy2, 1.5f);
+  const double pxpy2 = px * px + py * py;
+  const double pxpy3_2 = pow(pxpy2, 1.5f);
   Hj << px / sqrt(pxpy2),             py / sqrt(pxpy2),               0,                0,
         -py / pxpy2,                  px / pxpy2,                     0,                0,
         py*(vx*py - vy*px) / pxpy3_2, px*(vy*px - vx * py) / pxpy3_2, px / sqrt(pxpy2), py / sqrt(pxpy2);

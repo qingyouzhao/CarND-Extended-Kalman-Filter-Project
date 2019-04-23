@@ -21,6 +21,8 @@ FusionEKF::FusionEKF() {
   R_laser_ = MatrixXd(2, 2);
   R_radar_ = MatrixXd(3, 3);
   H_laser_ = MatrixXd(2, 4);
+  H_laser_ << 1, 0, 0, 0,
+              0, 1, 0, 0;
   Hj_ = MatrixXd(3, 4);
 
   //measurement covariance matrix - laser
@@ -33,17 +35,11 @@ FusionEKF::FusionEKF() {
               0, 0, 0.09;
 
   /**
-   * TODO: Finish initializing the FusionEKF.
-   * TODO: Set the process and measurement noises
+   * TODO: Finish initializing the FusionEKF. done
+   * TODO: Set the process and measurement noises done
    */
   VectorXd x(4);
   MatrixXd P(4, 4);
-  P << 1000, 0, 0, 0,
-       0, 1000, 0, 0,
-       0,0,1000,0,
-       0, 0, 0, 1000;
-  H_laser_ << 1, 0, 1, 0,
-              0, 1, 0, 1;
   MatrixXd F = MatrixXd::Identity(4, 4);
   MatrixXd Q(4, 4);
   ekf_ = KalmanFilter();
@@ -61,8 +57,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
   if (!is_initialized_) {
     /**
-     * TODO: Initialize the state ekf_.x_ with the first measurement.
-     * TODO: Create the covariance matrix.
+     * TODO: Initialize the state ekf_.x_ with the first measurement. done 
+     * TODO: Create the covariance matrix. done
      * You'll need to convert radar from polar to cartesian coordinates.
      */
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -73,33 +69,30 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
-      //         and initialize state.
-      const float & ro = measurement_pack.raw_measurements_[0];
-      const float & theta = measurement_pack.raw_measurements_[1];
-      // const float & ro_dot = measurement_pack.raw_measurements_[2];
+      //         and initialize state. done
+      const double & ro = measurement_pack.raw_measurements_[0];
+      const double & theta = measurement_pack.raw_measurements_[1];
       
-      const float px = ro * cos(theta);
-      const float py = ro * sin(theta);
-      // const float vx = ro_dot * cos(theta);
-      // const float vy = ro_dot * sin(theta);
-      ekf_.x_ << px, py, 0, 0;
+      const double px = ro * cos(theta);
+      const double py = ro * sin(theta);
+      ekf_.x_ << px, py, 1.0, 1.0;
       ekf_.P_ << 1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1;
+                 0, 1, 0, 0,
+                 0, 0, 1e8, 0,
+                 0, 0, 0, 1e8;
       cout << "Finished initialize as RADAR: " << endl;
       cout << "Initialized: P_ \n" << ekf_.P_ << endl;
 
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      // TODO: Initialize state.
-      const float & px = measurement_pack.raw_measurements_[0];
-      const float & py = measurement_pack.raw_measurements_[1];
-      ekf_.x_ << px, py, 0, 0;
+      // TODO: Initialize state. done 
+      const double & px = measurement_pack.raw_measurements_[0];
+      const double & py = measurement_pack.raw_measurements_[1];
+      ekf_.x_ << px, py, 1, 1;
       ekf_.P_ << 1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1;
+                 0, 1, 0, 0,
+                 0, 0, 1e8, 0,
+                 0, 0, 0, 1e8;
       cout << "Finished initialize as LIDAR: " << endl;
       cout << "Initialized: P_ \n" << ekf_.P_ << endl;
 
@@ -115,12 +108,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
 
   /**
-   * TODO: Update the state transition matrix F according to the new elapsed time.
+   * TODO: Update the state transition matrix F according to the new elapsed time. done
    * Time is measured in seconds.
-   * TODO: Update the process noise covariance matrix.
+   * TODO: Update the process noise covariance matrix. done
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
-  const float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1e6;
+  const double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1e6;
   cout << "Current timestamp = " << measurement_pack.timestamp_ << endl;
   cout << "Current measurement \n" << measurement_pack.raw_measurements_ << endl;
   previous_timestamp_ = measurement_pack.timestamp_;
@@ -137,8 +130,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   /**
    * TODO:
-   * - Use the sensor type to perform the update step.
-   * - Update the state and covariance matrices.
+   * - Use the sensor type to perform the update step. done
+   * - Update the state and covariance matrices. done
    */
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
@@ -147,10 +140,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // TODO: Laser updates
-    // Update H_ based on p' = p + v * dt;
     ekf_.H_ = H_laser_;
-    ekf_.H_ << 1, 0, dt, 0,
-               0, 1, 0, dt;
     ekf_.R_ = R_laser_;
     ekf_.Update(measurement_pack.raw_measurements_);
   }
@@ -160,16 +150,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   cout << "P_ = " << ekf_.P_ << endl;
 }
 
-Eigen::MatrixXd FusionEKF::ConstructProcessCovarianceMatrix(const float dt, const float noise_ax, const float noise_ay)
+Eigen::MatrixXd FusionEKF::ConstructProcessCovarianceMatrix(const double dt, const double noise_ax, const double noise_ay)
 {
   MatrixXd Q(4, 4);
-  const float dt_2 = dt * dt;
-  const float dt_3 = dt_2 * dt;
-  const float dt_4 = dt_3 * dt;
+  const double dt_2 = dt * dt;
+  const double dt_3 = dt_2 * dt;
+  const double dt_4 = dt_3 * dt;
   Q = MatrixXd(4, 4);
-  Q << dt_4 / 4.f*noise_ax, 0, dt_3 / 2.f*noise_ax, 0,
-    0, dt_4 / 4.f*noise_ay, 0, dt_3 / 2.f*noise_ay,
-    dt_3 / 2.f*noise_ax, 0, dt_2*noise_ax, 0,
-    0, dt_3 / 2.f*noise_ay, 0, dt_2*noise_ay;
+  Q << dt_4 / 4.0*noise_ax,     0,                    dt_3 / 2.0*noise_ax,  0,
+       0,                       dt_4 / 4.0*noise_ay,  0,                    dt_3 / 2.0*noise_ay,
+       dt_3 / 2.0*noise_ax,     0,                    dt_2*noise_ax,        0,
+       0,                       dt_3 / 2.0*noise_ay,  0,                    dt_2*noise_ay;
   return Q;
 }
